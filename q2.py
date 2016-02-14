@@ -23,7 +23,7 @@ def cluster_pixels(pixels, k, img_dim):
 def RGB(img, k, filename):
     # print 'rgb'
     pixels = np.reshape(img, (img.shape[0] * img.shape[1], img.shape[2]))
-    pixels = pixels.astype(float)
+    pixels = pixels.astype('float32')
 
     clustered = cluster_pixels(pixels, k, (img.shape[0], img.shape[1]))
     clustered = clustered.astype('uint8')
