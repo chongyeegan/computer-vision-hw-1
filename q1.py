@@ -16,13 +16,16 @@ IMAGE = [[4., 1., 6., 1., 3.],
          [2., 5., 7., 3., 7.],
          [1., 4., 7., 1., 3.],
          [0., 1., 6., 4., 4.]]
-# BLUR33 = [[0.0625, 0.125, 0.0625],
-#           [0.125, 0.25, 0.125],
-#           [0.0625, 0.125, 0.0625]]
+
+# this blur kernel has sigma = 2
 BLUR33 = [[0.102059, 0.115349, 0.102059],
           [0.115349, 0.130371, 0.115349],
           [0.102059, 0.115349, 0.102059]]
 
+# this blur kernel has sigma = 1
+# BLUR33 = [[0.077847, 0.123317, 0.077847],
+#           [0.123317, 0.195346, 0.123317],
+#           [0.077847, 0.123317, 0.077847]]
 DEFAULT33 = np.zeros((3, 3))
 
 
@@ -58,34 +61,31 @@ def SobelFilter(img):
 
 
 def DistanceFilter(img):
-    win = np.array(BLUR33).astype('float32')
+    win = np.array(BLUR33).astype(np.float)
+    win = custom_utils.norml_mtx(win)
     blurred = filters.convolve(img, win, mode='constant', cval=0)
     blurred = np.clip(blurred, 0, 1)
     return blurred
 
 
 def GeneratePixelGauss(img, mid):
-    # can play with this
-    # inten_sig = 0.005
-    # inten_sig = 0.01
-    inten_sig = 0.045
-
-    # like this
-    # inten_sig = 0.05
-
-    weight = np.exp(-(img - img[mid[0]][mid[1]])**2 / inten_sig)
+    inten_sig = 0.1
+    # inten_sig = 0.5
+    # inten_sig = 1
+    # inten_sig = 2
+    weight = np.exp(-((img - img[mid[0]][mid[1]])**2) / ((2 * inten_sig)**2))
     return weight
 
 
 def get_middle(mtx):
-    return math.ceil(mtx.shape[0] / 2), math.ceil(mtx.shape[1] / 2)
+    return math.floor(mtx.shape[0] / 2), math.floor(mtx.shape[1] / 2)
 
 
 def pixel_func(img, kernel):
     mid = get_middle(kernel)
     weight = GeneratePixelGauss(img, mid)
     weight_norm = custom_utils.norml_mtx(weight)
-    apply_weights = custom_utils.sum_cross_mtx(img, weight)
+    apply_weights = custom_utils.sum_cross_mtx(img, weight_norm)
     return apply_weights
 
 
@@ -98,10 +98,10 @@ def PixelFilter(img):
 def combo_func(img, kernel):
     mid = get_middle(kernel)
     pixel = GeneratePixelGauss(img, mid)
-    dist = np.array(BLUR33).astype('float32')
+    dist = np.array(BLUR33).astype(np.float)
     weight = pixel * dist
     weight_norm = custom_utils.norml_mtx(weight)
-    apply_weights = custom_utils.sum_cross_mtx(img, weight)
+    apply_weights = custom_utils.sum_cross_mtx(img, weight_norm)
     return apply_weights
 
 

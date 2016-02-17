@@ -73,8 +73,8 @@ def AddNoise(img):
     # gauss = np.random.normal(mean, sigma, img.shape)
     # gauss = gauss.reshape(img.shape[0], img.shape[1])
     # noisy = img + gauss
-    # noisy = util.random_noise(img, mode='gaussian', var=0.002)
-    noisy = util.random_noise(img, mode='gaussian', var=0.0015)
+    noisy = util.random_noise(img, mode='gaussian', var=0.002)
+    # noisy = util.random_noise(img, mode='gaussian', var=0.0015)
 
     # noisy = util.random_noise(img, mode='s&p')
     return noisy
