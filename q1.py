@@ -73,7 +73,7 @@ def GeneratePixelGauss(img, mid):
     # inten_sig = 0.5
     # inten_sig = 1
     # inten_sig = 2
-    weight = np.exp(-((img - img[mid[0]][mid[1]])**2) / ((2 * inten_sig)**2))
+    weight = np.exp(-((img - img[mid[0]][mid[1]])**2) / (2*(inten_sig)**2))
     return weight
 
 
