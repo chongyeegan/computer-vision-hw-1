@@ -38,13 +38,12 @@ def MeanFilter(img):
     win = np.array(mean33) / 9
     # assumes zero pad. need to think about
     # print filters.convolve(img, win, mode='constant', cval=0)
-    # print utils.convolve(img, win)
-    return custom_utils.convolve(img, win, custom_utils.sum_cross_mtx)
+    return custom_utils.handle_window(img, win, custom_utils.sum_cross_mtx)
 
 
 def MedianFilter(img):
     # out = filters.median_filter(img, size=(3, 3), mode='constant', cval=0)
-    return custom_utils.convolve(img, DEFAULT33, custom_utils.median_cross_mtx)
+    return custom_utils.handle_window(img, DEFAULT33, custom_utils.median_cross_mtx, False)
 
 
 # http://homepages.inf.ed.ac.uk/rbf/HIPR2/sobel.htm
@@ -53,8 +52,8 @@ def SobelFilter(img):
     y_filter = [[-1., -2., -1.], [0., 0., 0.], [1., 2., 1.]]
     # f_x = filters.sobel(img, axis=1, mode='constant', cval=0.0)
     # f_y = filters.sobel(img, axis=0, mode='constant', cval=0.0)
-    g_x = custom_utils.convolve(img, x_filter, custom_utils.sum_cross_mtx)
-    g_y = custom_utils.convolve(img, y_filter, custom_utils.sum_cross_mtx)
+    g_x = custom_utils.handle_window(img, x_filter, custom_utils.sum_cross_mtx)
+    g_y = custom_utils.handle_window(img, y_filter, custom_utils.sum_cross_mtx)
     u_mag = np.hypot(g_x, g_y)
     u_dir = np.arctan2(g_y, g_x)
     return u_mag, u_dir
@@ -73,7 +72,7 @@ def GeneratePixelGauss(img, mid):
     # inten_sig = 0.5
     # inten_sig = 1
     # inten_sig = 2
-    weight = np.exp(-((img - img[mid[0]][mid[1]])**2) / (2*(inten_sig)**2))
+    weight = np.exp(-((img - img[mid[0]][mid[1]])**2) / (2 * (inten_sig)**2))
     return weight
 
 
@@ -90,7 +89,7 @@ def pixel_func(img, kernel):
 
 
 def PixelFilter(img):
-    out = custom_utils.convolve(img, DEFAULT33, pixel_func)
+    out = custom_utils.handle_window(img, DEFAULT33, pixel_func, False)
     out = np.clip(out, 0, 1)
     return out
 
@@ -106,7 +105,7 @@ def combo_func(img, kernel):
 
 
 def ComboFilter(img):
-    out = custom_utils.convolve(img, DEFAULT33, combo_func)
+    out = custom_utils.handle_window(img, DEFAULT33, combo_func, False)
     out = np.clip(out, 0, 1)
     return out
 
@@ -139,6 +138,9 @@ def blurThenUnsharpen(img_path, sds, filename):
     for sd in sds:
         print 'Sigma:', str(sd)
         blurred = filters.gaussian_filter(img, sd)
+        custom_utils.plot_im_grey(blurred,
+                                  'Blurred where sigma is ' + str(sd),
+                                  'Q1/blurred_' + filename + '_' + str(sd) + '.png')
         unsharpened = UnsharpMasking(blurred, sd)
         unsharpened = np.clip(unsharpened, 0, 1)
         custom_utils.plot_im_grey(unsharpened,

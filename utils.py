@@ -46,7 +46,7 @@ def median_cross_mtx(n, kernel):
 
 
 # implementation of zero pad convolution
-def convolve(img, kernel, fun):
+def handle_window(img, kernel, fun, flip=True):
     img = np.array(img, dtype=np.float)
     kernel = np.array(kernel, dtype=np.float)
     result = np.array(img, copy=True)
@@ -56,8 +56,10 @@ def convolve(img, kernel, fun):
     padded = np.zeros((total_width, total_height), dtype=np.float)
     padded[l_pad:-r_pad, t_pad:-b_pad] = img
 
-    flipped = np.flipud(kernel)
-    flipped = np.fliplr(flipped)
+    flipped = kernel
+    if flip:
+        flipped = np.flipud(flipped)
+        flipped = np.fliplr(flipped)
     flipped = norml_mtx(flipped)
 
     for (row, col), value in np.ndenumerate(img):
