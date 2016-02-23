@@ -11,6 +11,8 @@ import utils as custom_utils
 
 __author__ = 'jhh283'
 
+
+# provided image matrix from hw
 IMAGE = [[4., 1., 6., 1., 3.],
          [3., 2., 7., 7., 2.],
          [2., 5., 7., 3., 7.],
@@ -26,10 +28,12 @@ BLUR33 = [[0.102059, 0.115349, 0.102059],
 # BLUR33 = [[0.077847, 0.123317, 0.077847],
 #           [0.123317, 0.195346, 0.123317],
 #           [0.077847, 0.123317, 0.077847]]
+
+# default 3x3 matrix of zeros
 DEFAULT33 = np.zeros((3, 3))
 
 
-# add noise
+# function applies a 3x3 mean filter on a provided image
 def MeanFilter(img):
     # img = np.array(img)
     mean33 = [[1., 1., 1.],
@@ -41,12 +45,14 @@ def MeanFilter(img):
     return custom_utils.handle_window(img, win, custom_utils.sum_cross_mtx)
 
 
+# function applies a 3x3 median filter on a provided image
 def MedianFilter(img):
     # out = filters.median_filter(img, size=(3, 3), mode='constant', cval=0)
     return custom_utils.handle_window(img, DEFAULT33, custom_utils.median_cross_mtx, False)
 
 
-# http://homepages.inf.ed.ac.uk/rbf/HIPR2/sobel.htm
+# function applies a 3x3 sobel filter on a provided image (in both directions)
+# calculates gradiant magnitude and direction and returns that
 def SobelFilter(img):
     x_filter = [[-1., 0., 1.], [-2., 0., 2.], [-1., 0., 1.]]
     y_filter = [[-1., -2., -1.], [0., 0., 0.], [1., 2., 1.]]
@@ -59,14 +65,19 @@ def SobelFilter(img):
     return u_mag, u_dir
 
 
+# calls a distance-based filter on a provided image
+# the distance filter used is a 3 x 3 gaussian blur kernel listed above
 def DistanceFilter(img):
     win = np.array(BLUR33).astype(np.float)
+    # normalize the window and apply convolution with zero padding
     win = custom_utils.norml_mtx(win)
     blurred = filters.convolve(img, win, mode='constant', cval=0)
+    # clip to ensure grayscale values
     blurred = np.clip(blurred, 0, 1)
     return blurred
 
 
+# helper function for generating gaussian sub-windows based on pixel intensities off a provided image
 def GeneratePixelGauss(img, mid):
     inten_sig = 0.1
     # inten_sig = 0.5
@@ -76,40 +87,51 @@ def GeneratePixelGauss(img, mid):
     return weight
 
 
+# returns the 'center' of a provided image
 def get_middle(mtx):
     return math.floor(mtx.shape[0] / 2), math.floor(mtx.shape[1] / 2)
 
 
+# run a pixel-value based filter on a provided image
+# by default uses the GeneratePixelGauss function to generate sub filter windows for every window of the image
 def pixel_func(img, kernel):
     mid = get_middle(kernel)
     weight = GeneratePixelGauss(img, mid)
+    # need to normalize and apply cross correlation
     weight_norm = custom_utils.norml_mtx(weight)
     apply_weights = custom_utils.sum_cross_mtx(img, weight_norm)
     return apply_weights
 
 
+# calls a pixel value-based filter on a provided image
 def PixelFilter(img):
     out = custom_utils.handle_window(img, DEFAULT33, pixel_func, False)
     out = np.clip(out, 0, 1)
     return out
 
 
+# run a value and distance based filter on provided subimage
 def combo_func(img, kernel):
     mid = get_middle(kernel)
+    # generate pixel gaussian
     pixel = GeneratePixelGauss(img, mid)
+    # combine with distance gaussian
     dist = np.array(BLUR33).astype(np.float)
     weight = pixel * dist
+    # apply the new window
     weight_norm = custom_utils.norml_mtx(weight)
     apply_weights = custom_utils.sum_cross_mtx(img, weight_norm)
     return apply_weights
 
 
+# calls a pixel and distance-based filter on a provided image
 def ComboFilter(img):
     out = custom_utils.handle_window(img, DEFAULT33, combo_func, False)
     out = np.clip(out, 0, 1)
     return out
 
 
+# helper that runs all 3 filters on the provided images
 def RunFilters(img, filename, plot_title):
     dfilt_img = DistanceFilter(img)
     pfilt_img = PixelFilter(img)
@@ -128,11 +150,13 @@ def RunFilters(img, filename, plot_title):
                               filename + '_combo.png')
 
 
+# implementation of unsharp masking based on provided formula
 def UnsharpMasking(img, gauss_sd):
     gauss = filters.gaussian_filter(img, gauss_sd)
     return (2 * img) - gauss
 
 
+# helper that executes "blur" then "unsharp masking" on provided images
 def blurThenUnsharpen(img_path, sds, filename):
     img = io.imread(img_path, as_grey=True)
     for sd in sds:

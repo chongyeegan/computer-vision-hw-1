@@ -11,20 +11,25 @@ __author__ = 'jhh283'
 MAX_COLOR_VAL = 255.0
 
 
+# run kmeans + vq on provided pixels and k value
 def cluster_pixels(pixels, k, img_dim):
-    codebook, _ = kmeans(pixels, k)
-    quantz, _ = vq(pixels, codebook)
-    cent_id = np.reshape(quantz, img_dim)
-    clustered = codebook[cent_id]
+    codebook, _ = kmeans(pixels, k)  # run kmeans
+    quantz, _ = vq(pixels, codebook)  # run quantization
+    cent_id = np.reshape(quantz, img_dim)  # reshape back to prior image dimensions
+    clustered = codebook[cent_id]  # get values from codebook
     return clustered
 
 
+# run RGB quantization
 def RGB(img, k, filename):
     # print 'rgb'
+    # need to reshape prior to performing kmeans + vq
     pixels = np.reshape(img, (img.shape[0] * img.shape[1], img.shape[2]))
     pixels = pixels.astype('float32')
 
+    # call kmeans + vq
     clustered = cluster_pixels(pixels, k, (img.shape[0], img.shape[1]))
+    # force back into 255 pixel space
     clustered = clustered.astype('uint8')
     fig = plt.figure(1)
     plt.imshow(clustered)
@@ -34,15 +39,23 @@ def RGB(img, k, filename):
     return clustered
 
 
+# run LAB quantization
 def LAB(img, k, filename):
     # print 'lab'
+    # restructure image pixel values into range from 0 to 1 - needed for library
     img = img * 1.0 / MAX_COLOR_VAL
-    pixels_lab = color.rgb2lab(img)
-    L = pixels_lab[:, :, 0]
-    pixels_l = np.reshape(L, (L.shape[0] * L.shape[1], 1))
 
+    # convert rgb to LAB
+    pixels_lab = color.rgb2lab(img)
+    # remove the L channel
+    L = pixels_lab[:, :, 0]
+
+    # reshape, cluster, and retrieve quantized values
+    pixels_l = np.reshape(L, (L.shape[0] * L.shape[1], 1))
     clustered = cluster_pixels(pixels_l, k, (L.shape[0], L.shape[1]))
     pixels_lab[:, :, 0] = clustered[:, :, 0]
+
+    # convert result to 255 RGB space
     quanted_img = color.lab2rgb(pixels_lab) * MAX_COLOR_VAL
     quanted_img = quanted_img.astype('uint8')
 
@@ -54,18 +67,21 @@ def LAB(img, k, filename):
     return quanted_img
 
 
+# helper to calculate SSD
 def SSD(img1, img2):
     diff = img1 - img2
     diff2 = diff * diff
     return diff2.sum()
 
 
+# call quantization with LAB and build histograms
 def HIST(img, k, filename):
     img = img * 1.0 / MAX_COLOR_VAL
     pixels_lab = color.rgb2lab(img)
     L = pixels_lab[:, :, 0]
     pixels_l = np.reshape(L, (L.shape[0] * L.shape[1], 1))
 
+    # evenly spaced histograms
     fig = plt.figure()
     plt.hist(pixels_l, bins=100)
     plt.title("L before Quantization")
@@ -82,6 +98,7 @@ def HIST(img, k, filename):
     plt.close(fig)
 
 
+# function to call everything for the HW
 def runPrePost(filename, k, name):
     img = io.imread(filename)
     qRGB = RGB(img, k, name)

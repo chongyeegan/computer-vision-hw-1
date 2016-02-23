@@ -6,6 +6,7 @@ from skimage import util
 __author__ = 'jhh283'
 
 
+# function which normalizes the values in a provided matrix
 def norml_mtx(matrix):
     summed = np.sum(matrix)
     if summed > 0.:
@@ -14,6 +15,7 @@ def norml_mtx(matrix):
         return matrix
 
 
+# calculate minimum padding (one side of the image)
 def getSmallPad(MaskDim):
     pad = int(MaskDim / 2) - (1 - (MaskDim % 2))
     if (pad < 0):
@@ -21,17 +23,20 @@ def getSmallPad(MaskDim):
     return pad
 
 
+# calculate total dimensional padding (both sides)
 def getTotalPad(MaskDim, ImgDim):
     smallPad = getSmallPad(MaskDim)
     bigPad = MaskDim / 2
     return ImgDim + smallPad + bigPad, smallPad, bigPad
 
 
+# fetch the neighbors for a particular value in a matrix
 def fetch_neighbors(row, col, padded, ker_w, ker_h):
     neighbors = padded[row:row + ker_w, col:col + ker_h]
     return neighbors
 
 
+# perform cross correlation
 # requires the same size n and kernel
 def sum_cross_mtx(n, kernel):
     summed = 0
@@ -40,12 +45,15 @@ def sum_cross_mtx(n, kernel):
     return summed
 
 
+# find the median value of a matrix
 # requires the same size n and kernel
 def median_cross_mtx(n, kernel):
     return np.median(n)
 
 
-# implementation of zero pad convolution
+# runs a matrix operation on a large image based on the provided fun function
+# by default will perform the flips expected by convolution
+# implementation of zero pad boundary handling
 def handle_window(img, kernel, fun, flip=True):
     img = np.array(img, dtype=np.float)
     kernel = np.array(kernel, dtype=np.float)
@@ -69,6 +77,7 @@ def handle_window(img, kernel, fun, flip=True):
     return result
 
 
+# add noise helper function - uses gaussian by default
 def AddNoise(img):
     # mean = 0
     # sigma = 0.045
@@ -82,6 +91,7 @@ def AddNoise(img):
     return noisy
 
 
+# plot grayscale image helper
 def plot_im_grey(img, title, fn):
     fig = plt.figure(1)
     plt.imshow(img, cmap=cm.Greys_r)
@@ -90,6 +100,7 @@ def plot_im_grey(img, title, fn):
     plt.close(fig)
 
 
+# plot image helper
 def plot_im(img, title, fn):
     fig = plt.figure(1)
     plt.imshow(img)
